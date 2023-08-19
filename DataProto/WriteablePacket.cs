@@ -17,6 +17,71 @@ public ref struct WriteablePacket
         Data = data ?? new byte[defaultSize];
     }
 
+    public void Write(object instance)
+    {
+        foreach (var property in instance.GetType().GetProperties())
+        {
+            var value = property.GetValue(instance);
+
+            if (value is null)
+            {
+                continue;
+            }
+
+            switch (Type.GetTypeCode(value.GetType()))
+            {
+                case TypeCode.Byte or TypeCode.SByte or TypeCode.Char or TypeCode.Boolean:
+                    WriteByte((byte) value);
+                    break;
+
+                case TypeCode.Int16:
+                    WriteShort((short) value);
+                    break;
+
+                case TypeCode.Object:
+                    Write(value);
+                    break;
+                
+                case TypeCode.UInt16:
+                    WriteUShort((ushort) value);
+                    break;
+
+                case TypeCode.Int32:
+                    WriteInt((int) value);
+                    break;
+
+                case TypeCode.UInt32:
+                    WriteUInt((uint) value);
+                    break;
+
+                // case TypeCode.Int64:
+                //     WriteBool((bool) value);
+                //     break;
+
+                // case TypeCode.UInt64:
+                //     break;
+
+                case TypeCode.Single:
+                    WriteFloat((float) value);
+                    break;
+
+                case TypeCode.Double:
+                    WriteDouble((double) value);
+                    break;
+
+                // case TypeCode.Decimal:
+                //     break;
+
+                case TypeCode.String:
+                    WriteString((string) value);
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteByte(byte data)
     {
@@ -34,7 +99,7 @@ public ref struct WriteablePacket
         Data[Position] = (byte) (data ? 1 : 0);
         Position++;
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteUShort(ushort data)
     {
@@ -62,7 +127,7 @@ public ref struct WriteablePacket
         BinaryPrimitives.WriteUInt32BigEndian(Data[Position..], data);
         Position += sizeof(uint);
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteInt(int data)
     {
@@ -71,7 +136,7 @@ public ref struct WriteablePacket
         BinaryPrimitives.WriteInt32BigEndian(Data[Position..], data);
         Position += sizeof(int);
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteFloat(float data)
     {
@@ -80,7 +145,7 @@ public ref struct WriteablePacket
         BinaryPrimitives.WriteSingleBigEndian(Data[Position..], data);
         Position += sizeof(float);
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteDouble(double data)
     {
@@ -89,7 +154,7 @@ public ref struct WriteablePacket
         BinaryPrimitives.WriteDoubleBigEndian(Data[Position..], data);
         Position += sizeof(double);
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteString(string data)
     {
@@ -102,7 +167,6 @@ public ref struct WriteablePacket
         {
             if (size > 2147483647)
             {
-                
             }
         }
 
@@ -128,7 +192,7 @@ public ref struct WriteablePacket
     {
         return packet.Data[..packet.Position].ToArray();
     }
-    
+
     public static implicit operator Span<byte>(WriteablePacket packet)
     {
         return packet.Data[..packet.Position];
@@ -146,7 +210,7 @@ public ref struct WriteablePacket
         {
             return;
         }
-        
+
         var buffer = new byte[Data.Length + size];
         Data.CopyTo(buffer);
         Data = buffer;
