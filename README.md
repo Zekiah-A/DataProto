@@ -40,8 +40,6 @@ or dynamic scenarios. For performance reasons, don't use this unless you have to
         B = new int[3]
     };
 
-    // Note, writing schemas is not currently supported.
-    // Following code is proposed for inclusion soon!
     var wrier = new WriteablePacket();
     
     writer.Write(schema);
@@ -50,3 +48,6 @@ or dynamic scenarios. For performance reasons, don't use this unless you have to
     var reader = new ReadablePacket(File.ReadAllBytes("./SomeObject.dat"));
     Console.WriteLine(JsonSerialiser.Serialise(reader.Read(schema)));
 ```
+
+# TODO:
+ - Make it so that we no longer need a target when reading complex objects, see [DataProto.Tests\Program.cs#L49](DataProto.Tests/Program.cs) for more info.

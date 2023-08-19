@@ -46,9 +46,11 @@ public ref struct ReadablePacket
             {
                 arrayTarget[i] = Read(arrayTarget[i], type.GetElementType()!)!;
             }
+
+            return target;
         }
 
-        // Otherwise, we will recurse through their properties and decode each, this is a recursive method, so 
+        // Otherwise, we will recurse through their properties and decode each
         foreach (var property in type.GetProperties())
         {
             var propertyValue = Read(property.GetValue(target), property.PropertyType);

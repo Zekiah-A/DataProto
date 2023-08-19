@@ -28,57 +28,55 @@ public ref struct WriteablePacket
                 continue;
             }
 
+            if (value is object[] arrayValue)
+            {
+                foreach(var item in arrayValue)
+                {
+                    Write(item);
+                }
+
+                continue;
+            }
+
             switch (Type.GetTypeCode(value.GetType()))
             {
                 case TypeCode.Byte or TypeCode.SByte or TypeCode.Boolean:
                     WriteByte(Convert.ToByte(value));
                     break;
-
                 // case TypeCode.Char:
                 //     break;
-
                 case TypeCode.Int16:
                     WriteShort((short) value);
                     break;
-
                 case TypeCode.Object:
                     Write(value);
                     break;
-                
                 case TypeCode.UInt16:
                     WriteUShort((ushort) value);
                     break;
-
                 case TypeCode.Int32:
                     WriteInt((int) value);
                     break;
-
                 case TypeCode.UInt32:
                     WriteUInt((uint) value);
                     break;
-
-                // case TypeCode.Int64:
-                //     WriteBool((bool) value);
-                //     break;
-
-                // case TypeCode.UInt64:
-                //     break;
-
+                case TypeCode.Int64:
+                    WriteLong((long) value);
+                    break;
+                 case TypeCode.UInt64:
+                    WriteULong((ulong) value);
+                    break;
                 case TypeCode.Single:
                     WriteFloat((float) value);
                     break;
-
                 case TypeCode.Double:
                     WriteDouble((double) value);
                     break;
-
                 // case TypeCode.Decimal:
                 //     break;
-
                 case TypeCode.String:
                     WriteString((string) value);
                     break;
-
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -140,6 +138,22 @@ public ref struct WriteablePacket
         Position += sizeof(int);
     }
 
+    public void WriteLong(long data)
+    {
+        EnsureCapacity(sizeof(long));
+
+        BinaryPrimitives.WriteInt64BigEndian(Data[Position..], data);
+        Position += sizeof(long);
+    }
+
+    public void WriteULong(ulong data)
+    {
+        EnsureCapacity(sizeof(ulong));
+
+        BinaryPrimitives.WriteUInt64BigEndian(Data[Position..], data);
+        Position += sizeof(ulong);
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteFloat(float data)
     {
@@ -158,26 +172,37 @@ public ref struct WriteablePacket
         Position += sizeof(double);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteString(string data)
     {
-        var size = Encoding.UTF8.GetByteCount(data);
-        var bytes = Encoding.UTF8.GetBytes(data);
+        var stringBytes = Encoding.UTF8.GetBytes(data);
+        var stringSize = stringBytes.Length;
+        var i = 0;
 
-        EnsureCapacity(size);
-
-        if (size > 16383)
+        if (stringSize > 0x3FFF)
         {
-            if (size > 2147483647)
+            if (stringSize > 0x7FFFFFFF)
             {
+                throw new ArgumentOutOfRangeException("Encoded strings may not have more than 2147483647 characters");
             }
+
+            WriteUInt((uint) stringSize);
+        }
+        else if (stringSize > 0x3F)
+        {
+            WriteUShort((ushort) stringSize);
+        }
+        else
+        {
+            WriteByte((byte) stringSize);
         }
 
-        for (var i = 0; i < data.Length; i++)
+        EnsureCapacity(stringSize);
+
+        for (;i < data.Length; i++)
         {
-            Data[Position + i] = bytes[i];
+            Data[Position + i] = stringBytes[i];
         }
-        Position += size;
+        Position += stringSize;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
