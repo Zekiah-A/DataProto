@@ -30,9 +30,12 @@ public ref struct WriteablePacket
 
             switch (Type.GetTypeCode(value.GetType()))
             {
-                case TypeCode.Byte or TypeCode.SByte or TypeCode.Char or TypeCode.Boolean:
-                    WriteByte((byte) value);
+                case TypeCode.Byte or TypeCode.SByte or TypeCode.Boolean:
+                    WriteByte(Convert.ToByte(value));
                     break;
+
+                // case TypeCode.Char:
+                //     break;
 
                 case TypeCode.Int16:
                     WriteShort((short) value);
