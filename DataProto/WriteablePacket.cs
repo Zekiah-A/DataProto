@@ -9,30 +9,18 @@ namespace DataProto;
 /// </summary>
 public ref struct WriteablePacket
 {
-    public byte[] RawData;
-    public Span<byte> Data;
-    public int Position = 0;
-    public int ReallocSize = 512;
+    public Span<byte> Data { get; private set; }
+    public int Position { get; private set; }
 
-    public WriteablePacket(byte[]? data = null)
+    public WriteablePacket(byte[]? data = null, int defaultSize = 2)
     {
-        RawData = data ?? new byte[ReallocSize];
-        Data = new Span<byte>(RawData);
+        Data = data ?? new byte[defaultSize];
     }
 
-    private void Realloc()
-    {
-        Array.Resize(ref RawData, RawData.Length + ReallocSize);
-        Data = new Span<byte>(RawData);
-    }
-    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteByte(byte data)
     {
-        if (Position == Data.Length)
-        {
-            Realloc();
-        }
+        EnsureCapacity(sizeof(byte));
 
         Data[Position] = data;
         Position++;
@@ -41,10 +29,7 @@ public ref struct WriteablePacket
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteBool(bool data)
     {
-        if (Position == Data.Length)
-        {
-            Realloc();
-        }
+        EnsureCapacity(sizeof(bool));
 
         Data[Position] = (byte) (data ? 1 : 0);
         Position++;
@@ -53,10 +38,7 @@ public ref struct WriteablePacket
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteUShort(ushort data)
     {
-        while (Position + sizeof(ushort) >= Data.Length)
-        {
-            Realloc();
-        }
+        EnsureCapacity(sizeof(ushort));
 
         BinaryPrimitives.WriteUInt16BigEndian(Data[Position..], data);
         Position += sizeof(ushort);
@@ -66,10 +48,7 @@ public ref struct WriteablePacket
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteShort(short data)
     {
-        while (Position + sizeof(short) >= Data.Length)
-        {
-            Realloc();
-        }
+        EnsureCapacity(sizeof(short));
 
         BinaryPrimitives.WriteInt16BigEndian(Data[Position..], data);
         Position += sizeof(short);
@@ -78,10 +57,7 @@ public ref struct WriteablePacket
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteUInt(uint data)
     {
-        while (Position + sizeof(uint) >= Data.Length)
-        {
-            Realloc();
-        }
+        EnsureCapacity(sizeof(uint));
 
         BinaryPrimitives.WriteUInt32BigEndian(Data[Position..], data);
         Position += sizeof(uint);
@@ -90,10 +66,7 @@ public ref struct WriteablePacket
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteInt(int data)
     {
-        while (Position + sizeof(int) >= Data.Length)
-        {
-            Realloc();
-        }
+        EnsureCapacity(sizeof(int));
 
         BinaryPrimitives.WriteInt32BigEndian(Data[Position..], data);
         Position += sizeof(int);
@@ -102,10 +75,7 @@ public ref struct WriteablePacket
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteFloat(float data)
     {
-        while (Position + sizeof(float) >= Data.Length)
-        {
-            Realloc();
-        }
+        EnsureCapacity(sizeof(float));
 
         BinaryPrimitives.WriteSingleBigEndian(Data[Position..], data);
         Position += sizeof(float);
@@ -114,10 +84,7 @@ public ref struct WriteablePacket
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteDouble(double data)
     {
-        while (Position + sizeof(double) >= Data.Length)
-        {
-            Realloc();
-        }
+        EnsureCapacity(sizeof(double));
 
         BinaryPrimitives.WriteDoubleBigEndian(Data[Position..], data);
         Position += sizeof(double);
@@ -128,10 +95,8 @@ public ref struct WriteablePacket
     {
         var size = Encoding.UTF8.GetByteCount(data);
         var bytes = Encoding.UTF8.GetBytes(data);
-        while (Position + size >= Data.Length)
-        {
-            Realloc();
-        }
+
+        EnsureCapacity(size);
 
         if (size > 16383)
         {
@@ -173,5 +138,17 @@ public ref struct WriteablePacket
     {
         get => Data[index];
         set => Data[index] = value;
+    }
+
+    private void EnsureCapacity(int size)
+    {
+        if (Data.Length > Position + size)
+        {
+            return;
+        }
+        
+        var buffer = new byte[Data.Length + size];
+        Data.CopyTo(buffer);
+        Data = buffer;
     }
 }
