@@ -41,10 +41,10 @@ try
     
     var reader = new ReadablePacket(writer);
     var name = reader.ReadString();
-    Console.WriteLine("Name: {0}", name);
+    Console.WriteLine("Name: {0}, Valid: {1}", name, name == buyer.Name);
 
     var age = reader.ReadInt();
-    Console.WriteLine("Age: {0}", age);
+    Console.WriteLine("Age: {0}, Valid: {1}", age, age == buyer.Age);
 
     // TODO: Make it so that we no longer need a target when reading complex objects.
     // TODO: Target is currently used to hold a default value so that the read function is able to output
@@ -53,8 +53,8 @@ try
     // TODO: with an array length argument for attays, or instead mandating a special function like "ReadObjectArray", The other
     // TODO: issues could be fixed by just allowing dataproto to only take in type, and then be able to create the instance of
     // TODO: the object it will output what it has read to, such as byh using Activator.CreateInstance() on the given type
-    var bought = reader.Read(new Product[]{ Products.None, Products.None, Products.None }, typeof(Product[]));
-    Console.WriteLine("Bought: {0}", bought);
+    var bought = reader.Read(new[] { Products.None, Products.None, Products.None }, typeof(Product[]));
+    Console.WriteLine("Bought: {0}, Valid: {1}", bought, bought == buyer.Bought);
 
     var details = reader.Read(new BillingDetails(0, string.Empty, 0), typeof(BillingDetails));
     Console.WriteLine(details);

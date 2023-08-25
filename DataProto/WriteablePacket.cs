@@ -11,10 +11,29 @@ public ref struct WriteablePacket
 {
     public Span<byte> Data { get; private set; }
     public int Position { get; private set; }
+    public int MaxCapacity { get; private set; }
 
-    public WriteablePacket(byte[]? data = null, int defaultSize = 2)
+    private byte[] dataArray;
+
+    public WriteablePacket() : this(null)
     {
-        Data = data ?? new byte[defaultSize];
+        
+    }
+
+    public WriteablePacket(byte[]? data = null, int defaultSize = 8)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(defaultSize, 2);
+
+        MaxCapacity = defaultSize;
+        if (data is null || data.Length < MaxCapacity)
+        {
+            dataArray = new byte[MaxCapacity];
+        }
+        else
+        {
+            dataArray = data;
+        }
+        Data = new Span<byte>(dataArray);
     }
 
     public void Write(object instance)
@@ -176,14 +195,13 @@ public ref struct WriteablePacket
     {
         var stringBytes = Encoding.UTF8.GetBytes(data);
         var stringSize = stringBytes.Length;
-        var i = 0;
 
         if (stringSize > 0x3FFF)
         {
-            if (stringSize > 0x7FFFFFFF)
+            /*if (stringSize > 0x7FFFFFFF)
             {
-                throw new ArgumentOutOfRangeException("Encoded strings may not have more than 2147483647 characters");
-            }
+                throw new ArgumentOutOfRangeException(nameof(data), "Encoded strings may not have more than 2147483647 characters");
+            }*/
 
             WriteUInt((uint) stringSize);
         }
@@ -196,9 +214,10 @@ public ref struct WriteablePacket
             WriteByte((byte) stringSize);
         }
 
+        Console.WriteLine(stringSize);
         EnsureCapacity(stringSize);
 
-        for (;i < data.Length; i++)
+        for (var i = 0; i < stringSize; i++)
         {
             Data[Position + i] = stringBytes[i];
         }
@@ -234,13 +253,20 @@ public ref struct WriteablePacket
 
     private void EnsureCapacity(int size)
     {
-        if (Data.Length > Position + size)
+        var newPosition = Position + size;
+        if (newPosition < MaxCapacity)
         {
             return;
         }
 
-        var buffer = new byte[Data.Length + size];
-        Data.CopyTo(buffer);
-        Data = buffer;
+        var newCapacity = MaxCapacity;
+        while (newCapacity <= newPosition)
+        {
+            newCapacity *= 2;
+        }
+        
+        Array.Resize(ref dataArray, newCapacity);
+        Data = new Span<byte>(dataArray);
+        MaxCapacity = newCapacity;
     }
 }
