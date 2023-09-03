@@ -22,7 +22,7 @@ Read from and write to a data buffer, with static typing
     var reader = new ReadablePacket(buffer);
     
     Debug.Assert(reader.ReadInt() == 123);
-    Debug.Assert(reader.ReadString() == "Hello World!")
+    Debug.Assert(reader.ReadString() == "Hello World!");
 ```
 
 ## Schemas
@@ -43,10 +43,10 @@ or dynamic scenarios. For performance reasons, don't use this unless you have to
     var wrier = new WriteablePacket();
     
     writer.Write(schema);
-    File.WriteAllBytes("./SomeObject.dat", schema);
+    File.WriteAllBytes("./SomeObject.dat", wrier);
     
     var reader = new ReadablePacket(File.ReadAllBytes("./SomeObject.dat"));
-    Console.WriteLine(JsonSerialiser.Serialise(reader.Read(schema)));
+    Console.WriteLine(JsonSerializer.Serialize(reader.Read(schema)));
 ```
 
 # TODO:
