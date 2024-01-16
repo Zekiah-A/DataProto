@@ -40,10 +40,10 @@ or dynamic scenarios. For performance reasons, don't use this unless you have to
         B = new int[3]
     };
 
-    var wrier = new WriteablePacket();
+    var writer = new WriteablePacket();
     
     writer.Write(schema);
-    File.WriteAllBytes("./SomeObject.dat", wrier);
+    File.WriteAllBytes("./SomeObject.dat", writer);
     
     var reader = new ReadablePacket(File.ReadAllBytes("./SomeObject.dat"));
     Console.WriteLine(JsonSerializer.Serialize(reader.Read(schema)));
