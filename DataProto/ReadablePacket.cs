@@ -125,8 +125,7 @@ public ref struct ReadablePacket
     public byte[] ReadByteArray()
     {
         var length = ReadFlexInt();
-        var array = Data[Position..(int) (Position + length)].ToArray();
-        Position += (int) length;
+        var array = ReadBytes((int) length);
         return array;
     }
 
