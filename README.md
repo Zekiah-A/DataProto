@@ -50,4 +50,4 @@ or dynamic scenarios. For performance reasons, don't use this unless you have to
 ```
 
 # TODO:
- - Make it so that we no longer need a target when reading complex objects, see [DataProto.Tests\Program.cs#L49](DataProto.Tests/Program.cs) for more info.
+See [issues](https://github.com/Zekiah-A/DataProto/issues)
